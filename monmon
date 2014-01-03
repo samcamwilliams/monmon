@@ -1,0 +1,30 @@
+#!/usr/bin/env escript
+
+main(_) ->
+	os:cmd("xrandr --output LVDS1 --mode 1366x768"),
+	wp(),
+	change(state()),
+	loop(state()).
+
+state() ->
+	case re:run(os:cmd("xrandr"), "VGA1 connected") of
+		{match, _} -> true;
+		_ -> false
+	end.
+
+change(true) -> os:cmd("xrandr --output VGA1 --auto --right-of LVDS1");
+change(false) -> os:cmd("xrandr --output VGA1 --off").
+
+wp() -> os:cmd("nitrogen --restore").
+
+wait() ->
+	receive
+	after 1000 -> ok
+	end.
+
+loop(S) ->
+	wait(),
+	case state() of
+		S -> server(S);
+		X -> change(X), wp(), server(X)
+	end.
